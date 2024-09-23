@@ -118,6 +118,21 @@ def parse_assessment_output(output):
     except json.JSONDecodeError as e:
         print("Failed to parse assessment output:", e)
         return [], []
+    
+@cl.set_starters
+async def set_starters():
+    return [
+        cl.Starter(
+            label="Start a campaign",
+            message="Start a campaing",
+            icon="/public/start.jpeg",
+            ),
+        cl.Starter(
+            label="Create a character",
+            message="Create a character",
+            icon="/public/character.jpeg",
+            ),
+    ]
 
 @cl.on_message
 async def on_message(message: cl.Message):
