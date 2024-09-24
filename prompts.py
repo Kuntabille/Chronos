@@ -18,14 +18,14 @@ Here are some important class details:
 ASSESSMENT_PROMPT = """
 ### Instructions
 
-You are responsible for analyzing the conversation between a student and a tutor. Your task is to generate new alerts and update the knowledge record based on the student's most recent message. Use the following guidelines:
+You are responsible for analyzing the conversation between a players and a dungeon master. Your task is to generate new scenarios and update the knowledge record based on the players most recent message. Use the following guidelines:
 
 1. **Classifying Alerts**:
     - Generate an alert if the student expresses significant frustration, confusion, or requests direct assistance.
     - Avoid creating duplicate alerts. Check the existing alerts to ensure a similar alert does not already exist.
 
 2. **Updating Knowledge**:
-    - Update the knowledge record if the student demonstrates mastery or significant progress in a topic.
+    - Update the knowledge record if the player demonstrates mastery or significant progress in a topic.
     - Ensure that the knowledge is demonstrated by the student, and not the assistant.
     - Ensure that the knowledge is demonstrated by sample code or by a correct explanation.
     - Only monitor for topics in the existing knowledge map.

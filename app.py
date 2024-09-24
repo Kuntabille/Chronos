@@ -6,6 +6,7 @@ import asyncio
 import json
 from datetime import datetime
 from prompts import ASSESSMENT_PROMPT, SYSTEM_PROMPT, CLASS_CONTEXT
+from langsmith.wrappers import wrap_openai
 from player_record import read_player_record, write_player_record, format_player_record, parse_player_record
 
 # Load environment variables
@@ -38,7 +39,7 @@ config_key = "openai_gpt-4"
 config = configurations[config_key]
 
 # Initialize the OpenAI async client
-client = openai.AsyncClient(api_key=config["api_key"], base_url=config["endpoint_url"])
+client = wrap_openai(openai.AsyncClient(api_key=config["api_key"], base_url=config["endpoint_url"]))
 
 gen_kwargs = {
     "model": config["model"],
@@ -103,7 +104,7 @@ async def assess_message(message_history):
 
     # Format the updated record and write it back to the file
     updated_content = format_player_record(
-        parsed_record["Student Information"],
+        parsed_record["Player Information"],
         parsed_record["Alerts"],
         parsed_record["Knowledge"]
     )
@@ -136,7 +137,9 @@ async def set_starters():
 
 @cl.on_message
 async def on_message(message: cl.Message):
+    # Maintain an array of messages in the user session
     message_history = cl.user_session.get("message_history", [])
+    message_history.append({"role": "user", "content": message.content})
 
     if ENABLE_SYSTEM_PROMPT and (not message_history or message_history[0].get("role") != "system"):
         system_prompt_content = SYSTEM_PROMPT
@@ -144,7 +147,6 @@ async def on_message(message: cl.Message):
             system_prompt_content += "\n" + CLASS_CONTEXT
         message_history.insert(0, {"role": "system", "content": system_prompt_content})
 
-    message_history.append({"role": "user", "content": message.content})
 
     asyncio.create_task(assess_message(message_history))
     

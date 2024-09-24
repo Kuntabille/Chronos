@@ -1,4 +1,3 @@
-
 # Player Record
 
 ## Player Information
