@@ -59,7 +59,7 @@ def get_latest_user_message(message_history):
     return None
 
 async def assess_message(message_history):
-    file_path = "student_record.md"
+    file_path = "player_record.md"
     markdown_content = read_player_record(file_path)
     parsed_record = parse_player_record(markdown_content)
 
