@@ -21,7 +21,11 @@ ASSESSMENT_PROMPT = """
 You are responsible for analyzing the conversation between a players and a dungeon master. Your task is to generate new scenarios and update the knowledge record based on the players most recent message. Use the following guidelines:
 
 1. **Classifying Alerts**:
+<<<<<<< HEAD
     - Generate an alert if the player is facing a challenge and has the skill to solve it.
+=======
+    - Ask the player an dice thown action if the player needs to resolve something. 
+>>>>>>> 20a7ec3 (Add data)
     - Avoid creating duplicate alerts. Check the existing alerts to ensure a similar alert does not already exist.
 
 2. **Updating Knowledge**:

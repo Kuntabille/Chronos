@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 from prompts import ASSESSMENT_PROMPT, SYSTEM_PROMPT, CLASS_CONTEXT
 from langsmith.wrappers import wrap_openai
+from langsmith import traceable
 from player_record import read_player_record, write_player_record, format_player_record, parse_player_record
 
 # Load environment variables
@@ -58,6 +59,7 @@ def get_latest_user_message(message_history):
             return message['content']
     return None
 
+@traceable
 async def assess_message(message_history):
     file_path = "player_record.md"
     markdown_content = read_player_record(file_path)
