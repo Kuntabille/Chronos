@@ -5,10 +5,11 @@ import openai
 import asyncio
 import json
 from datetime import datetime
-from prompts import ASSESSMENT_PROMPT, SYSTEM_PROMPT, CLASS_CONTEXT
+from prompts import ASSESSMENT_PROMPT, SYSTEM_PROMPT, CLASS_CONTEXT, CHARACTER_CREATION
 from langsmith.wrappers import wrap_openai
 from langsmith import traceable
 from player_record import read_player_record, write_player_record, format_player_record, parse_player_record
+from rag import load_pdf_for_rag, fetch_relevant_documents
 
 # Load environment variables
 load_dotenv()
@@ -51,6 +52,11 @@ gen_kwargs = {
 # Configuration setting to enable or disable the system prompt
 ENABLE_SYSTEM_PROMPT = True
 ENABLE_CLASS_CONTEXT = True
+IS_CREATE_CHARACTER = False
+
+# Load retriver for Rag:
+rag_retriver = load_pdf_for_rag("data/PlayerDnDBasicRules_v0.2_PrintFriendly.pdf")
+
 
 def get_latest_user_message(message_history):
     # Iterate through the message history in reverse to find the last user message
@@ -127,7 +133,7 @@ async def set_starters():
     return [
         cl.Starter(
             label="Start a campaign",
-            message="Start a campaing",
+            message="Start a campaign",
             icon="/public/start.jpeg",
             ),
         cl.Starter(
@@ -139,18 +145,34 @@ async def set_starters():
 
 @cl.on_message
 async def on_message(message: cl.Message):
+    global IS_CREATE_CHARACTER
+    
     # Maintain an array of messages in the user session
     message_history = cl.user_session.get("message_history", [])
     message_history.append({"role": "user", "content": message.content})
 
+    print("IS_CREATE_CHARACTER: ", IS_CREATE_CHARACTER)
+
     if ENABLE_SYSTEM_PROMPT and (not message_history or message_history[0].get("role") != "system"):
-        system_prompt_content = SYSTEM_PROMPT
-        if ENABLE_CLASS_CONTEXT:
-            system_prompt_content += "\n" + CLASS_CONTEXT
+        if message.content == "Create a character":
+            IS_CREATE_CHARACTER = True
+            system_prompt_content = CHARACTER_CREATION
+
+            # relevant_documents = fetch_relevant_documents("what are dwarves?", rag_retriver)
+            # print(relevant_documents)
+        else:
+            system_prompt_content = SYSTEM_PROMPT
+            if ENABLE_CLASS_CONTEXT:
+                system_prompt_content += "\n" + CLASS_CONTEXT
+        
         message_history.insert(0, {"role": "system", "content": system_prompt_content})
 
+    if IS_CREATE_CHARACTER:
+        relevant_documents = fetch_relevant_documents(message.content, rag_retriver)
+        print(relevant_documents)
+        message_history.append({"role": "system", "content": f"Use the following excerpt to answer: \n{relevant_documents}"})
 
-    asyncio.create_task(assess_message(message_history))
+    # asyncio.create_task(assess_message(message_history))
     
     response_message = cl.Message(content="")
     await response_message.send()
