@@ -9,7 +9,7 @@ from prompts import ASSESSMENT_PROMPT, SYSTEM_PROMPT, CLASS_CONTEXT, CHARACTER_C
 from langsmith.wrappers import wrap_openai
 from langsmith import traceable
 from player_record import read_player_record, write_player_record, format_player_record, parse_player_record
-from rag import load_pdf_for_rag, fetch_relevant_documents
+from rag import load_index_for_rag, fetch_relevant_documents
 
 # Load environment variables
 load_dotenv()
@@ -55,9 +55,9 @@ ENABLE_CLASS_CONTEXT = True
 IS_CREATE_CHARACTER = False
 
 # Load retriver for Rag:
-rag_retriver = load_pdf_for_rag("data/PlayerDnDBasicRules_v0.2_PrintFriendly.pdf")
+rag_retriver = load_index_for_rag("PlayerDnDBasicRules_v0.2_PrintFriendly")
 
-
+@traceable
 def get_latest_user_message(message_history):
     # Iterate through the message history in reverse to find the last user message
     for message in reversed(message_history):
@@ -118,6 +118,7 @@ async def assess_message(message_history):
     )
     write_player_record(file_path, updated_content)
 
+@traceable
 def parse_assessment_output(output):
     try:
         parsed_output = json.loads(output)
@@ -143,6 +144,7 @@ async def set_starters():
             ),
     ]
 
+@traceable
 @cl.on_message
 async def on_message(message: cl.Message):
     global IS_CREATE_CHARACTER
