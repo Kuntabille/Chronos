@@ -37,13 +37,27 @@ Summary: We are building an AI assistant which acts like a Dungeon master for a 
    ```sh
    source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
    ```
+2. **Install dependencies**
 
-2. **Run the Chainlit App**:
+Install the project dependencies from the `requirements.txt` file:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. **Set up environment variables**
+
+- Copy the `.env.sample` file to a new file named `.env`
+- Fill in the `.env` file with your API keys
+
+
+4. **Run the Chainlit App**:
    ```sh
    chainlit run app.py -w
    ```
+   Open your browser and navigate to the URL displayed in the terminal.
+   
 
-3. Open your browser and navigate to the URL displayed in the terminal.
 
 ## Tasks
 

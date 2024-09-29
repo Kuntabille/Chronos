@@ -29,13 +29,16 @@ configurations = {
         "endpoint_url": os.getenv("OPENAI_ENDPOINT"),
         "api_key": os.getenv("OPENAI_API_KEY"),
         "model": "gpt-4"
+    }, 
+    "openai_gpt-4o": {
+        "endpoint_url": os.getenv("OPENAI_ENDPOINT"),
+        "api_key": os.getenv("OPENAI_API_KEY"),
+        "model": "gpt-4o"
     }
 }
 
 # Choose configuration
-config_key = "openai_gpt-4"
-# config_key = "mistral_7B_instruct"
-#config_key = "mistral_7B"
+config_key = "openai_gpt-4o"
 
 # Get selected configuration
 config = configurations[config_key]
@@ -53,6 +56,7 @@ gen_kwargs = {
 ENABLE_SYSTEM_PROMPT = True
 ENABLE_CLASS_CONTEXT = True
 IS_CREATE_CHARACTER = False
+SHOULD_ASSESS_MESSAGE = False
 
 # Load retriver for Rag:
 rag_retriver = load_index_for_rag("PlayerDnDBasicRules_v0.2_PrintFriendly")
@@ -174,7 +178,8 @@ async def on_message(message: cl.Message):
         print(relevant_documents)
         message_history.append({"role": "system", "content": f"Use the following excerpt to answer: \n{relevant_documents}"})
 
-    # asyncio.create_task(assess_message(message_history))
+    if SHOULD_ASSESS_MESSAGE:
+        asyncio.create_task(assess_message(message_history))
     
     response_message = cl.Message(content="")
     await response_message.send()
