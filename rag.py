@@ -46,21 +46,27 @@ def load_index_for_rag(index_name):
         )
 
     # Create a retriever from the index
-    retriever = index.as_retriever()
+    #retriever = index.as_retriever()
+    retriever = index.as_retriever(retrieval_mode='similarity', k=4)
     return retriever
 
-def fetch_relevant_documents(message, retriever):
+# The score_threshold determines how relevant a node's text must be to add it
+#  to the content.  Typicaly 0.63 or higher yields relevant content.  Default
+#  is 0, which means any returned node will be used.
+def fetch_relevant_documents(message, retriever, score_threshold=0.0):
     if retriever is None:
         raise ValueError("Retriever has not been initialized. Call load_pdf_for_rag() first.")
-    
+
     # Retrieve relevant nodes based on the input message
     retrieved_nodes = retriever.retrieve(message)
-    print(f"{len(retrieved_nodes)} documents found.")
-    
+
     if not retrieved_nodes:
         return "No relevant information found."
-    
-    # Combine the content of retrieved nodes into a single string
-    relevant_content = "\n\n\n".join([node.node.text for node in retrieved_nodes])
 
+    # Combine the content of retrieved nodes into a single string
+    relevant_content = "\n\n\n"
+    for node in retrieved_nodes:
+        if node.score > score_threshold:
+            # only add content that is above the score threshold
+            relevant_content += node.node.text
     return relevant_content

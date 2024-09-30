@@ -57,6 +57,8 @@ ENABLE_SYSTEM_PROMPT = True
 ENABLE_CLASS_CONTEXT = True
 IS_CREATE_CHARACTER = False
 SHOULD_ASSESS_MESSAGE = False
+ENABLE_PLAYER_RAG = True
+PLAYER_RAG_SCORE_THRESHOLD = 0.63
 
 # Load retriver for Rag:
 rag_retriver = load_index_for_rag("PlayerDnDBasicRules_v0.2_PrintFriendly")
@@ -177,6 +179,11 @@ async def on_message(message: cl.Message):
         relevant_documents = fetch_relevant_documents(message.content, rag_retriver)
         print(relevant_documents)
         message_history.append({"role": "system", "content": f"Use the following excerpt to answer: \n{relevant_documents}"})
+    elif ENABLE_PLAYER_RAG:
+        relevant_documents = fetch_relevant_documents(message.content, rag_retriver, score_threshold=PLAYER_RAG_SCORE_THRESHOLD)
+        print(relevant_documents)
+        message_history.append({"role": "system", "content": f"Use the following excerpt to answer: \n{relevant_documents}"})
+
 
     if SHOULD_ASSESS_MESSAGE:
         asyncio.create_task(assess_message(message_history))
