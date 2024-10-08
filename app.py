@@ -158,6 +158,7 @@ async def on_message(message: cl.Message):
     # Maintain an array of messages in the user session
     message_history = cl.user_session.get("message_history", [])
     message_history.append({"role": "user", "content": message.content})
+    tools = []
 
     print("IS_CREATE_CHARACTER: ", IS_CREATE_CHARACTER)
 
@@ -178,6 +179,36 @@ async def on_message(message: cl.Message):
     if IS_CREATE_CHARACTER:
         relevant_documents = fetch_relevant_documents(message.content, rag_retriver)
         print(relevant_documents)
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "save_player_character",
+                    "description": "save the player record to a file",
+                    "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "race": {
+                                    "type": "string",
+                                    "description": "the race of the player"
+                                },
+                                "class": {
+                                    "type": "string",
+                                    "description": "the class of the player"
+                                },
+                                "ability_scores": {
+                                    "type": "string",
+                                    "description": "the ability scores of the player"
+                                },
+                                "equipment": {
+                                    "type": "string",
+                                    "description": "the equipment of the player"
+                                }
+                            }
+                    }
+                }
+            }
+        ]
         message_history.append({"role": "system", "content": f"Use the following excerpt to answer: \n{relevant_documents}"})
     elif ENABLE_PLAYER_RAG:
         relevant_documents = fetch_relevant_documents(message.content, rag_retriver, score_threshold=PLAYER_RAG_SCORE_THRESHOLD)
@@ -197,7 +228,10 @@ async def on_message(message: cl.Message):
             if token := part.choices[0].text or "":
                 await response_message.stream_token(token)
     else:
-        stream = await client.chat.completions.create(messages=message_history, stream=True, **gen_kwargs)
+        if tools:
+            stream = await client.chat.completions.create(messages=message_history, tools=tools, stream=True, **gen_kwargs)
+        else:
+            stream = await client.chat.completions.create(messages=message_history, stream=True, **gen_kwargs)
         async for part in stream:
             if token := part.choices[0].delta.content or "":
                 await response_message.stream_token(token)
@@ -209,3 +243,8 @@ async def on_message(message: cl.Message):
 
 if __name__ == "__main__":
     cl.main()
+
+
+#TODO: call this tool when OpenAI returns a function call
+def save_player_character(character):
+    print("Saving player character: ", character)
