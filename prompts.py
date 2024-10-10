@@ -88,9 +88,14 @@ You will guide the player in the conversation as their defining their player and
 4. Equipment
 
 
-At the end of the conversation, you will save the player record in a file and confirm the same to the player. 
-"""
+At the end of the conversation when the player has finished creating their character, generate the function call in the following format and nothing else:
 
+{
+    "function": "save_player_character",
+    "character_string": "character description as a string"
+}
+
+"""
 
 
 # {

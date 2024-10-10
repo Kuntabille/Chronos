@@ -8,7 +8,7 @@ from datetime import datetime
 from prompts import ASSESSMENT_PROMPT, SYSTEM_PROMPT, CLASS_CONTEXT, CHARACTER_CREATION
 from langsmith.wrappers import wrap_openai
 from langsmith import traceable
-from player_record import read_player_record, write_player_record, format_player_record, parse_player_record
+from player_record import read_player_record, write_player_record, format_player_record, parse_player_record, save_player_character
 from rag import load_index_for_rag, fetch_relevant_documents
 
 # Load environment variables
@@ -158,8 +158,7 @@ async def on_message(message: cl.Message):
     # Maintain an array of messages in the user session
     message_history = cl.user_session.get("message_history", [])
     message_history.append({"role": "user", "content": message.content})
-    tools = []
-
+    
     print("IS_CREATE_CHARACTER: ", IS_CREATE_CHARACTER)
 
     if ENABLE_SYSTEM_PROMPT and (not message_history or message_history[0].get("role") != "system"):
@@ -178,37 +177,6 @@ async def on_message(message: cl.Message):
 
     if IS_CREATE_CHARACTER:
         relevant_documents = fetch_relevant_documents(message.content, rag_retriver)
-        print(relevant_documents)
-        tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "save_player_character",
-                    "description": "save the player record to a file",
-                    "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "race": {
-                                    "type": "string",
-                                    "description": "the race of the player"
-                                },
-                                "class": {
-                                    "type": "string",
-                                    "description": "the class of the player"
-                                },
-                                "ability_scores": {
-                                    "type": "string",
-                                    "description": "the ability scores of the player"
-                                },
-                                "equipment": {
-                                    "type": "string",
-                                    "description": "the equipment of the player"
-                                }
-                            }
-                    }
-                }
-            }
-        ]
         message_history.append({"role": "system", "content": f"Use the following excerpt to answer: \n{relevant_documents}"})
     elif ENABLE_PLAYER_RAG:
         relevant_documents = fetch_relevant_documents(message.content, rag_retriver, score_threshold=PLAYER_RAG_SCORE_THRESHOLD)
@@ -228,13 +196,21 @@ async def on_message(message: cl.Message):
             if token := part.choices[0].text or "":
                 await response_message.stream_token(token)
     else:
-        if tools:
-            stream = await client.chat.completions.create(messages=message_history, tools=tools, stream=True, **gen_kwargs)
-        else:
-            stream = await client.chat.completions.create(messages=message_history, stream=True, **gen_kwargs)
+        stream = await client.chat.completions.create(messages=message_history, stream=True, **gen_kwargs)
         async for part in stream:
             if token := part.choices[0].delta.content or "":
                 await response_message.stream_token(token)
+
+    if "\"function\": " in response_message.content:
+        print("Function call detected: ", response_message.content)
+        
+        # extract the json from the message
+        json_start = response_message.content.find("{")
+        json_end = response_message.content.rfind("}") + 1
+        function_call = response_message.content[json_start:json_end]
+        print("JSON string: ", function_call)
+
+        handle_function_call(function_call)
 
     message_history.append({"role": "assistant", "content": response_message.content})
     cl.user_session.set("message_history", message_history)
@@ -244,7 +220,11 @@ async def on_message(message: cl.Message):
 if __name__ == "__main__":
     cl.main()
 
+def handle_function_call(function_call):
+    json_message = json.loads(function_call)
 
-#TODO: call this tool when OpenAI returns a function call
-def save_player_character(character):
-    print("Saving player character: ", character)
+    function_name = json_message.get("function")
+
+    if function_name == "save_player_character":
+        character = json_message.get("character_string")
+        save_player_character(character=character)

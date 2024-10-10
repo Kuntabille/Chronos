@@ -87,3 +87,12 @@ def parse_player_record(markdown_content):
     }
     print(f"Final parsed record: {final_record}")
     return final_record
+
+def save_player_character(character):
+    file_path = "player_record.md"
+    record = f"""
+       ## Player character
+       {character}
+    """
+    
+    write_player_record(file_path, record)
