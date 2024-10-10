@@ -17,7 +17,7 @@ def load_pdf_for_rag(pdf_path, storage_context):
     index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
     return index
 
-def load_index_for_rag(index_name):
+def load_index(index_name):
     # generate database name to load
     db_name = "index_dbs/" + index_name + "_db"
     if not os.path.exists(db_name):
@@ -44,11 +44,20 @@ def load_index_for_rag(index_name):
         index = VectorStoreIndex.from_vector_store(
             vector_store, storage_context=storage_context
         )
+    return index
 
+def load_index_for_rag(index_name):
+    index = load_index(index_name)
     # Create a retriever from the index
     #retriever = index.as_retriever()
     retriever = index.as_retriever(retrieval_mode='similarity', k=4)
     return retriever
+
+def load_query_engine(index_name):
+    index = load_index(index_name)
+    # Create query engine from the index
+    query_engine = index.as_query_engine()
+    return query_engine
 
 # The score_threshold determines how relevant a node's text must be to add it
 #  to the content.  Typicaly 0.63 or higher yields relevant content.  Default

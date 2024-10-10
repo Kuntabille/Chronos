@@ -57,7 +57,17 @@ pip install -r requirements.txt
    ```
    Open your browser and navigate to the URL displayed in the terminal.
    
-
+## Running Evaluation
+1. **Generate the Evaluation Dataset**
+   ```sh
+   python generate_dataset.sh
+   ```
+2. **Verify in Langfuse:** Check that the dataset 'chronos-qa-pairs' is created.
+3. **Run the Evaluation**
+   ```sh
+   python evaluate_rag.py
+   ```
+4. **Verify in Langfuse:** Check the traces 'chronos-qa' has run.
 
 ## Tasks
 
