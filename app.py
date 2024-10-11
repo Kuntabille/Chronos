@@ -124,7 +124,6 @@ async def assess_message(message_history):
     )
     write_player_record(file_path, updated_content)
 
-@traceable
 def parse_assessment_output(output):
     try:
         parsed_output = json.loads(output)
@@ -149,6 +148,44 @@ async def set_starters():
             icon="/public/character.jpeg",
             ),
     ]
+
+def handle_function_call(function_call):
+    json_message = json.loads(function_call)
+
+    function_name = json_message.get("function")
+
+    if function_name == "save_player_character":
+        character = json_message.get("character_string")
+        save_player_character(character=character)
+
+async def generate_response(client, message_history, gen_kwargs):
+    response_message = cl.Message(content="")
+    await response_message.send()
+
+    if config_key == "mistral_7B":
+        stream = await client.completions.create(prompt=message.content, stream=True, **gen_kwargs)
+        async for part in stream:
+            if token := part.choices[0].text or "":
+                await response_message.stream_token(token)
+    else:
+        stream = await client.chat.completions.create(messages=message_history, stream=True, **gen_kwargs)
+        async for part in stream:
+            if token := part.choices[0].delta.content or "":
+                await response_message.stream_token(token)
+    
+    if "\"function\": " in response_message.content:
+        print("Function call detected: ", response_message.content)
+        
+        # extract the json from the message
+        json_start = response_message.content.find("{")
+        json_end = response_message.content.rfind("}") + 1
+        function_call = response_message.content[json_start:json_end]
+        print("JSON string: ", function_call)
+
+        handle_function_call(function_call)
+        response_message = cl.Message(content="Character saved successfully!")
+
+    return response_message
 
 @traceable
 @cl.on_message
@@ -187,31 +224,7 @@ async def on_message(message: cl.Message):
     if SHOULD_ASSESS_MESSAGE:
         asyncio.create_task(assess_message(message_history))
     
-    response_message = cl.Message(content="")
-    await response_message.send()
-
-    if config_key == "mistral_7B":
-        stream = await client.completions.create(prompt=message.content, stream=True, **gen_kwargs)
-        async for part in stream:
-            if token := part.choices[0].text or "":
-                await response_message.stream_token(token)
-    else:
-        stream = await client.chat.completions.create(messages=message_history, stream=True, **gen_kwargs)
-        async for part in stream:
-            if token := part.choices[0].delta.content or "":
-                await response_message.stream_token(token)
-
-    if "\"function\": " in response_message.content:
-        print("Function call detected: ", response_message.content)
-        
-        # extract the json from the message
-        json_start = response_message.content.find("{")
-        json_end = response_message.content.rfind("}") + 1
-        function_call = response_message.content[json_start:json_end]
-        print("JSON string: ", function_call)
-
-        handle_function_call(function_call)
-
+    response_message = await generate_response(client, message_history, gen_kwargs)
     message_history.append({"role": "assistant", "content": response_message.content})
     cl.user_session.set("message_history", message_history)
     await response_message.update()
@@ -220,11 +233,3 @@ async def on_message(message: cl.Message):
 if __name__ == "__main__":
     cl.main()
 
-def handle_function_call(function_call):
-    json_message = json.loads(function_call)
-
-    function_name = json_message.get("function")
-
-    if function_name == "save_player_character":
-        character = json_message.get("character_string")
-        save_player_character(character=character)
