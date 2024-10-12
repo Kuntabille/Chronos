@@ -8,7 +8,7 @@ from datetime import datetime
 from prompts import ASSESSMENT_PROMPT, SYSTEM_PROMPT, CLASS_CONTEXT, CHARACTER_CREATION
 from langsmith.wrappers import wrap_openai
 from langsmith import traceable
-from player_record import read_player_record, write_player_record, format_player_record, parse_player_record, save_player_character
+from player_record import read_player_record, write_player_record, format_player_record, parse_player_record, save_player_character, get_player_character
 from rag import load_index_for_rag, fetch_relevant_documents
 
 # Load environment variables
@@ -169,7 +169,7 @@ async def on_message(message: cl.Message):
             # relevant_documents = fetch_relevant_documents("what are dwarves?", rag_retriver)
             # print(relevant_documents)
         else:
-            system_prompt_content = SYSTEM_PROMPT
+            system_prompt_content = SYSTEM_PROMPT + "\n\n" + get_player_character()
             if ENABLE_CLASS_CONTEXT:
                 system_prompt_content += "\n" + CLASS_CONTEXT
         
@@ -201,17 +201,16 @@ async def on_message(message: cl.Message):
             if token := part.choices[0].delta.content or "":
                 await response_message.stream_token(token)
 
-    if "\"function\": " in response_message.content:
-        print("Function call detected: ", response_message.content)
-        
+    if "\"function\": " in response_message.content:        
         # extract the json from the message
         json_start = response_message.content.find("{")
         json_end = response_message.content.rfind("}") + 1
         function_call = response_message.content[json_start:json_end]
-        print("JSON string: ", function_call)
 
         handle_function_call(function_call)
-
+        IS_CREATE_CHARACTER = False
+        message_history = [msg for msg in message_history if msg['role'] != 'system']
+        
     message_history.append({"role": "assistant", "content": response_message.content})
     cl.user_session.set("message_history", message_history)
     await response_message.update()

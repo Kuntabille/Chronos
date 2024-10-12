@@ -96,3 +96,7 @@ def save_player_character(character):
     """
     
     write_player_record(file_path, record)
+
+def get_player_character():
+    file_path = "player_record.md"
+    return read_player_record(file_path)

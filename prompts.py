@@ -88,30 +88,12 @@ You will guide the player in the conversation as their defining their player and
 4. Equipment
 
 
-At the end of the conversation when the player has finished creating their character, generate the function call in the following format and nothing else:
+At the end of the conversation when the player has finished creating their character, generate the function call in the following format:
 
 {
     "function": "save_player_character",
     "character_string": "character description as a string"
 }
 
+Also ask the player if they are ready to start a campaign.
 """
-
-
-# {
-#     "race": String,
-#     "class": String,
-#     "ability_scores": {
-#         "strength": Int,
-#         "dexterity": Int,
-#         "constitution": Int,
-#         "intelligence": Int,
-#         "wisdom": Int,
-#         "charisma": Int
-#     },
-#     "equipment": [
-#         String,
-#         String,
-#         ...
-#     ]
-# }
