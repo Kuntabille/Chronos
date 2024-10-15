@@ -4,9 +4,14 @@ Summary: We are building an AI assistant which acts like a Dungeon master for a 
 
 
 # Team
-Chandrashekar Viayarenu
-Thomas Ezan
-Steve Paik
+- Chandrashekar Viayarenu
+- Thomas Ezan
+- Steve Paik
 
 
-#Demo
+# Live link. 
+https://chronos-u39w.onrender.com/
+
+# Demo
+
+[![Chronos - AI Dungeon master](public/youtube.png)](https://youtu.be/TWiq4s3yHl0 "AI Dungeon master")
